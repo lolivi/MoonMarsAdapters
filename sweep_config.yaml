@@ -1,0 +1,42 @@
+
+program: model_train.py
+
+method: grid
+
+parameters:
+  encoder:
+    values: ["efficientnet-b3"] 
+  optimizer:
+    values: ["adam"]
+  loss_function:
+    values: ["BalancedCCE"]
+  aug_GaussianBlur:
+    values: [0]
+  aug_ColorJitter:
+    values: [0]
+  aug_HorizontalFlip:
+    values: [0]
+  aug_Rotate:
+    values: [0]
+  aug_RandomCrop:
+    values: [0.5]
+  baseline:
+    values: [True]
+  ftuneenc:
+    values: [False]
+  ftunedec:
+    values: [False]
+  ftunebnorm:
+    values: [False]
+  ftuneadapt:
+    values: [False]
+
+project: synthetic-moon-baseline #real-moon #ai4mars #mars-datasetv3 #sythetic-moon-baseline
+
+#  TO LAUNCH:
+# >> wandb sweep sweep_config.yaml  (return sweep_id)
+# >> CUDA_VISIBLE_DEVICES=x wandb agent sweep_id  (specify the GPU x (ex: 0/1))
+# 0 has 20 GB, 1 has 8 GB
+
+# to check the devices:
+# >> nvidia-smi

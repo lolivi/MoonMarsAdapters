@@ -1,0 +1,15 @@
+numpy
+pandas 
+matplotlib
+scikit-learn
+seaborn
+opencv-python
+albumentations
+torchsummary
+segmentation_models_pytorch
+tqdm
+Pillow
+imgaug
+psutil
+wandb
+fvcore
