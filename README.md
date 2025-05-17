@@ -5,7 +5,7 @@
   2) The dataset folder must to be renamed to "**synthetic-moon-dataset**"
 
 ## AI4Mars
-  1) The AI4Mars dataset (), can be downloaded at the following link and saved as "**ai4mars-dataset-merged-0.1**": https://data.nasa.gov/dataset/ai4mars-a-dataset-for-terrain-aware-autonomous-driving-on-mars
+  1) The AI4Mars dataset, can be downloaded at the following link and saved as "**ai4mars-dataset-merged-0.1**": https://data.nasa.gov/dataset/ai4mars-a-dataset-for-terrain-aware-autonomous-driving-on-mars
   2) The script "**remove_rover_ai4mars.py**" must be executed to delete rover images from the dataset
  
 ## MarsDatasetv2 + Sky Annotations
