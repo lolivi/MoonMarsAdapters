@@ -1,3 +1,29 @@
+# Environment Setup
+
+## Linux 
+```bash
+# Create a virtual environment
+python -m venv myenv
+
+# Activate the environment
+source myenv/bin/activate
+
+# Install packages
+pip install -r requirements.txt
+```
+
+## Windows
+```cmd
+# Create a virtual environment
+python -m venv myenv
+
+# Activate the environment
+myenv\Scripts\activate.bat
+
+# Install packages
+pip install -r requirements.txt
+```
+
 # Datasets Setup
 
 ## Synthetic & Real Moon Dataset
