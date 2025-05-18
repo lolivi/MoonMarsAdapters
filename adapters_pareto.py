@@ -9,11 +9,6 @@ encoders = ["resnet18","vgg19_bn"]
 removetradeoff = [9,11]
 xlabels = ["Resnet18 - Adapter Cumulative Size [MBytes]","Vgg19BN - Adapter Cumulative Size [MBytes]"]
 ylabels = ["Real Mars - Balanced Accuracy [%]","Real Moon - Balanced Accuracy [%]"]
-'''
-colors = ["green", "red", "cyan", "orange","blue"]
-methods = ["forward","backward","wnorm","nparams","wnorm_nparams"]
-labels = ["Forward","Backward", r"$Z \ = \ ||w_{f_n}||^2$", r"$Z \ = \ |w_{f_n}|$",r"$Z \ = \ \frac{||w_{f_n}||^2}{|w_{f_n}|}$"]
-'''
 colors = ["cyan", "orange","blue"]
 methods = ["wnorm","nparams","wnorm_nparams"]
 labels = [r"$Z \ = \ ||w_{f_n}||^2$", r"$Z \ = \ |w_{f_n}|$",r"$Z \ = \ \frac{||w_{f_n}||^2}{|w_{f_n}|}$"]
@@ -57,5 +52,3 @@ fig.legend(handles, labels, loc='upper center', ncol=7, bbox_to_anchor=(0.5, 1.0
 # Adjust layout to make space for the legend
 fig.tight_layout(rect=[0, 0, 1, 0.95])
 plt.savefig("adapt_pareto.pdf", bbox_inches='tight')
-
-sys.exit()

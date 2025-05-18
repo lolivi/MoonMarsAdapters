@@ -40,7 +40,7 @@ for encoder_name in encoder_names:
     ftuneadapt = False
 
     unet_train = saveorload(modelsdir,1,0,0,0,0,0.5,encoder_name,"adam","BalancedCCE",baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt)
-    model_train(unet_train, encoder_name, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
+    # model_train(unet_train, encoder_name, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
     non_frozen_parameters = sum([len(torch.flatten(p)) for p in unet_train.parameters() if p.requires_grad])
     tot_parameters = sum([len(torch.flatten(p)) for p in unet_train.parameters()])
     params_train.append(non_frozen_parameters / 1e6)
@@ -59,3 +59,6 @@ print("Trainable Parameters (M): ",params_train)
 print("Trainable Parameters (%s): " % ("%"),params_perc) 
 print("FLOPs (G):",flops_arr)
 print("----------------------------------------------------")
+
+
+

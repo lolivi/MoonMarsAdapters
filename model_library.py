@@ -17,7 +17,9 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn.parameter import Parameter
 
+
 from PIL import Image
+from PIL import ImageEnhance
 import cv2
 import albumentations as A
 import imgaug
@@ -532,7 +534,94 @@ def trainconv(layer):
     # layer.weight.requires_grad_(True)
     # if bias: layer.bias.requires_grad_(True)
 
-def model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt):
+def model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers = [False for _ in range(27)]):
+
+    if (ftunelayers[0]):
+        trainconv(model.encoder_1_1_conv)
+        trainbnorm(model.encoder_1_2_batchnorm)
+    if (ftunelayers[1]):
+        trainconv(model.encoder_2_1_conv)
+        trainbnorm(model.encoder_2_2_batchnorm)
+    if (ftunelayers[2]):
+        trainconv(model.encoder_2_4_conv)
+        trainbnorm(model.encoder_2_5_batchnorm)
+    if (ftunelayers[3]):
+        trainconv(model.encoder_2_7_conv)
+        trainbnorm(model.encoder_2_8_batchnorm)
+    if (ftunelayers[4]):
+        trainconv(model.encoder_2_10_conv)
+        trainbnorm(model.encoder_2_11_batchnorm)
+    if (ftunelayers[5]):
+        trainconv(model.encoder_3_1_conv)
+        trainbnorm(model.encoder_3_2_batchnorm)
+    if (ftunelayers[6]):
+        trainconv(model.encoder_3_4_conv)
+        trainbnorm(model.encoder_3_5_batchnorm)
+        trainconv(model.encoder_3_6_downsample)
+        trainbnorm(model.encoder_3_7_batchnorm)
+    if (ftunelayers[7]):
+        trainconv(model.encoder_3_9_conv)
+        trainbnorm(model.encoder_3_10_batchnorm)
+    if (ftunelayers[8]):
+        trainconv(model.encoder_3_12_conv)
+        trainbnorm(model.encoder_3_13_batchnorm)
+    if (ftunelayers[9]):
+        trainconv(model.encoder_4_1_conv)
+        trainbnorm(model.encoder_4_2_batchnorm)
+    if (ftunelayers[10]):
+        trainconv(model.encoder_4_4_conv)
+        trainbnorm(model.encoder_4_5_batchnorm)
+        trainconv(model.encoder_4_6_downsample)
+        trainbnorm(model.encoder_4_7_batchnorm)
+    if (ftunelayers[11]):
+        trainconv(model.encoder_4_9_conv)
+        trainbnorm(model.encoder_4_10_batchnorm)
+    if (ftunelayers[12]):
+        trainconv(model.encoder_4_12_conv)
+        trainbnorm(model.encoder_4_13_batchnorm)
+    if (ftunelayers[13]):
+        trainconv(model.encoder_5_1_conv)
+        trainbnorm(model.encoder_5_2_batchnorm)
+    if (ftunelayers[14]):
+        trainconv(model.encoder_5_4_conv)
+        trainbnorm(model.encoder_5_5_batchnorm)
+        trainconv(model.encoder_5_6_downsample)
+        trainbnorm(model.encoder_5_7_batchnorm)
+    if (ftunelayers[15]):
+        trainconv(model.encoder_5_9_conv)
+        trainbnorm(model.encoder_5_10_batchnorm)
+    if (ftunelayers[16]):
+        trainconv(model.encoder_5_12_conv)
+        trainbnorm(model.encoder_5_13_batchnorm)
+    if (ftunelayers[17]):
+        trainconv(model.decoder_1_1_conv)
+        trainbnorm(model.decoder_1_2_batchnorm)
+    if (ftunelayers[18]):
+        trainconv(model.decoder_1_4_conv)
+        trainbnorm(model.decoder_1_5_batchnorm)
+    if (ftunelayers[19]):
+        trainconv(model.decoder_2_1_conv)
+        trainbnorm(model.decoder_2_2_batchnorm)
+    if (ftunelayers[20]):
+        trainconv(model.decoder_3_1_conv)
+        trainbnorm(model.decoder_3_2_batchnorm)
+    if (ftunelayers[21]):
+        trainconv(model.decoder_3_4_conv)
+        trainbnorm(model.decoder_3_5_batchnorm)
+    if (ftunelayers[22]):
+        trainconv(model.decoder_4_1_conv)
+        trainbnorm(model.decoder_4_2_batchnorm)
+    if (ftunelayers[23]):
+        trainconv(model.decoder_4_4_conv)
+        trainbnorm(model.decoder_4_5_batchnorm)
+    if (ftunelayers[24]):
+        trainconv(model.decoder_5_1_conv)
+        trainbnorm(model.decoder_5_2_batchnorm)
+    if (ftunelayers[25]):
+        trainconv(model.decoder_5_4_conv)
+        trainbnorm(model.decoder_5_5_batchnorm)
+    if (ftunelayers[26]):
+        trainconv(model.decoder_6_1_conv)
 
     if (ftuneenc):
 
@@ -730,7 +819,94 @@ def model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt):
         trainbnorm(model.adapter_27_1_batchnorm)
         trainconv(model.adapter_27_2_conv)
 
-def model_train_vgg19bn(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt):
+def model_train_vgg19bn(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers):   #= [False for _ in range(28)]
+
+    #first block
+    if (ftunelayers[0]):
+        trainconv(model.encoder_1_1_conv)
+        trainbnorm(model.encoder_1_2_batchnorm)
+    if (ftunelayers[1]):
+        trainconv(model.encoder_1_4_conv)
+        trainbnorm(model.encoder_1_5_batchnorm)
+    if (ftunelayers[2]):
+        trainconv(model.encoder_2_1_conv)
+        trainbnorm(model.encoder_2_2_batchnorm)
+    if (ftunelayers[3]):
+        trainconv(model.encoder_2_4_conv)
+        trainbnorm(model.encoder_2_5_batchnorm)
+    if (ftunelayers[4]):
+        trainconv(model.encoder_3_1_conv)
+        trainbnorm(model.encoder_3_2_batchnorm)
+    if (ftunelayers[5]):
+        trainconv(model.encoder_3_4_conv)
+        trainbnorm(model.encoder_3_5_batchnorm)
+    if (ftunelayers[6]):
+        trainconv(model.encoder_3_7_conv)
+        trainbnorm(model.encoder_3_8_batchnorm)
+    if (ftunelayers[7]):
+        trainconv(model.encoder_3_10_conv)
+        trainbnorm(model.encoder_3_11_batchnorm)
+    if (ftunelayers[8]):
+        trainconv(model.encoder_4_1_conv)
+        trainbnorm(model.encoder_4_2_batchnorm)
+    if (ftunelayers[9]):
+        trainconv(model.encoder_4_4_conv)
+        trainbnorm(model.encoder_4_5_batchnorm)
+    if (ftunelayers[10]):
+        trainconv(model.encoder_4_7_conv)
+        trainbnorm(model.encoder_4_8_batchnorm)
+    if (ftunelayers[11]):
+        trainconv(model.encoder_4_10_conv)
+        trainbnorm(model.encoder_4_11_batchnorm)
+    if (ftunelayers[12]):
+        trainconv(model.encoder_5_1_conv)
+        trainbnorm(model.encoder_5_2_batchnorm)
+    if (ftunelayers[13]):
+        trainconv(model.encoder_5_4_conv)
+        trainbnorm(model.encoder_5_5_batchnorm)
+    if (ftunelayers[14]):
+        trainconv(model.encoder_5_7_conv)
+        trainbnorm(model.encoder_5_8_batchnorm)
+    if (ftunelayers[15]):
+        trainconv(model.encoder_5_10_conv)
+        trainbnorm(model.encoder_5_11_batchnorm)
+    if (ftunelayers[16]):
+        trainconv(model.decoder_1_1_conv)
+        trainbnorm(model.decoder_1_2_batchnorm)
+    if (ftunelayers[17]):
+        trainconv(model.decoder_1_4_conv)
+        trainbnorm(model.decoder_1_5_batchnorm)
+    if (ftunelayers[18]):
+        trainconv(model.decoder_2_1_conv)
+        trainbnorm(model.decoder_2_2_batchnorm)
+    if (ftunelayers[19]):
+        trainconv(model.decoder_2_4_conv)
+        trainbnorm(model.decoder_2_5_batchnorm)
+    if (ftunelayers[20]):
+        trainconv(model.decoder_3_1_conv)
+        trainbnorm(model.decoder_3_2_batchnorm)
+    if (ftunelayers[21]):
+        trainconv(model.decoder_3_4_conv)
+        trainbnorm(model.decoder_3_5_batchnorm)
+    if (ftunelayers[22]):
+        trainconv(model.decoder_4_1_conv)
+        trainbnorm(model.decoder_4_2_batchnorm)
+    if (ftunelayers[23]):
+        trainconv(model.decoder_4_4_conv)
+        trainbnorm(model.decoder_4_5_batchnorm)
+    if (ftunelayers[24]):
+        trainconv(model.decoder_5_1_conv)
+        trainbnorm(model.decoder_5_2_batchnorm)
+    if (ftunelayers[25]):
+        trainconv(model.decoder_5_4_conv)
+        trainbnorm(model.decoder_5_5_batchnorm)
+    if (ftunelayers[26]):
+        trainconv(model.decoder_6_1_conv)
+        trainbnorm(model.decoder_6_2_batchnorm)
+    if (ftunelayers[27]):
+        trainconv(model.decoder_6_4_conv)
+        trainbnorm(model.decoder_6_5_batchnorm)
+        trainconv(model.decoder_7_1_conv)
 
     if (ftuneenc):
 
@@ -1181,20 +1357,20 @@ def model_train_18_rep2(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt):
         trainbnorm(model.adapter_27_3_batchnorm)
         trainconv(model.adapter_27_4_conv)
 
-def model_train(model, encoder, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt):
+def model_train(model, encoder, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers = [False for _ in range(28)]):   # 
 
     if (baseline): model.train()
     else:
         model.eval() #setting batchnorm to evaluation
         for p in model.parameters(): p.requires_grad_(False) #freezing all layers
-        if (encoder == "resnet18"): model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
+        if (encoder == "resnet18"): model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt,ftunelayers)
         if (encoder == "resnet18_relu"): model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
         if (encoder == "resnet18_conv"): model_train_18(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
         if (encoder == "resnet18_rep2"): model_train_18_rep2(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
-        if (encoder == "vgg19_bn"): model_train_vgg19bn(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
+        if (encoder == "vgg19_bn"): model_train_vgg19bn(model, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers)
 
 def fit(model, train_loader, val_loader, criterion, optimizer, scheduler, metric_names, 
-        baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, encoder, 
+        baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers, encoder, 
         wandbopt, run, device, stopat = None):
     
     torch.cuda.empty_cache()
@@ -1229,7 +1405,7 @@ def fit(model, train_loader, val_loader, criterion, optimizer, scheduler, metric
         lr_list = [] #learning rate for each epoch
         
         #training loop
-        model_train(model, encoder, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
+        model_train(model, encoder, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers)
         
         for i, data in enumerate(tqdm(train_loader)):
             
@@ -1345,8 +1521,8 @@ def fit(model, train_loader, val_loader, criterion, optimizer, scheduler, metric
         #scheduler step at each epoch
         scheduler.step(test_loss/len(val_loader))
 
-        if get_lr(optimizer)<(initial_lr/1000):
-            break   
+        if get_lr(optimizer)<(initial_lr/1000): break   
+        if (epoch >= 1e2): break 
 
         # wandb logging things   
         if (wandbopt):
@@ -1464,7 +1640,7 @@ def plot_lrs(history,dirplot,figsdir):
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-def evaluate(model,test_loader,metric_names,device_eval):
+def evaluate(model,test_loader,metric_names,device_eval,noise_opt=False,noise_val=0):
 
     model.eval()
     model.to(device_eval)
@@ -1476,11 +1652,23 @@ def evaluate(model,test_loader,metric_names,device_eval):
         for i, data in enumerate(tqdm(test_loader)):
             
             image, mask = data
-            image = image.to(device_eval)
-            mask = mask.to(device_eval)
-            
+
             #image = image.unsqueeze(0)
             #mask = mask.unsqueeze(0)
+
+            if noise_opt != False:
+                if noise_opt == 'gauss':
+                    noise = torch.randn(image.shape)*noise_val
+                    image = image + noise
+                if noise_opt == 'bad_pxl':
+                    image = nn.functional.dropout(image, p= noise_val)
+                if noise_opt == 'blur':
+                    image = T.GaussianBlur(kernel_size=(noise_val,noise_val), sigma=noise_val)(image)
+                if noise_opt == 'bright':
+                    image = torchvision.transforms.functional.adjust_brightness(image,noise_val)
+                    
+            image = image.to(device_eval)
+            mask = mask.to(device_eval)
 
             #forward
             output = model(image)  

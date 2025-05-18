@@ -18,7 +18,7 @@ def perc(x):
     return x
 
 #modelsdir
-modelsdir = "marsdataset3-models/"     # marsdataset3-models,real-moon-models
+modelsdir = "real-moon-models"     # marsdataset3-models,real-moon-models
 
 #adapter method
 baseline = False
@@ -27,13 +27,28 @@ ftunedec = True
 ftunebnorm = True
 ftuneadapt = True
 
+
 #fused methods
 unet_resnet18 = saveorload(modelsdir,1,0,0,0,0,0.5,"resnet18","adam","BalancedCCE",baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt)
 model_train(unet_resnet18, "resnet18", False, True, True, True, True)
 unet_resnet18_fuse = compress_weights(copy.deepcopy(unet_resnet18),"resnet18")
+
+non_frozen_parameters_resnet_orig = sum([len(torch.flatten(p)) for p in unet_resnet18.parameters() if p.requires_grad])
+non_frozen_parameters_resnet_fuse = sum([len(torch.flatten(p)) for p in unet_resnet18_fuse.parameters() if p.requires_grad])
+
+
 unet_vgg19 = saveorload(modelsdir,1,0,0,0,0,0.5,"vgg19_bn","adam","BalancedCCE",baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt)
 model_train(unet_vgg19, "vgg19_bn", False, True, True, True, True)
 unet_vgg19_fuse = compress_weights(copy.deepcopy(unet_vgg19),"vgg19_bn")
+
+non_frozen_parameters_vgg19_orig = sum([len(torch.flatten(p)) for p in unet_vgg19.parameters() if p.requires_grad])
+non_frozen_parameters_vgg19_fuse = sum([len(torch.flatten(p)) for p in unet_vgg19_fuse.parameters() if p.requires_grad])
+
+
+
+params_train= [non_frozen_parameters_resnet_orig/1e6,non_frozen_parameters_resnet_fuse/1e6,non_frozen_parameters_vgg19_orig/1e6,non_frozen_parameters_vgg19_fuse/1e6] 
+
+
 
 #flop counter
 img_test = torch.ones([1,1,512,512])
@@ -49,6 +64,7 @@ for imethod,method in enumerate(methods):
 
 print("----------------------------------------------------")
 print("Adapter Fusion:")
-print("Methods: ", methods) 
+print("Methods: ", methods)
+print("Trainable Parameters [M]: ", params_train) 
 print("FLOPs (G):", flops_arr)
 print("----------------------------------------------------")

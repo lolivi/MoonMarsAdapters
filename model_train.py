@@ -5,9 +5,9 @@ from model_library import *
 # GLOBAL VARIABLES
 
 #deciding whether to log or not variables to wandb
-wandbopt = True
+wandbopt = False
 compopt = False # whether to compute mean, std devs and distributions
-datasettype = "synthetic-moon" #"synthetic-moon", "real-moon","ai4mars","marsdataset3"
+datasettype = "marsdataset3" #"synthetic-moon", "real-moon","ai4mars","marsdataset3"
 
 if (datasettype == "synthetic-moon"):
     IMAGE_PATH = "synthetic-moon-dataset/images/render/"
@@ -38,8 +38,10 @@ if (not os.path.exists(figsdir)): os.makedirs(figsdir)
 if (not os.path.exists(modelsdir)): os.makedirs(modelsdir)
 
 #check if cuda is available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 device_id = torch.cuda.current_device()
+#device = torch.device("cpu")
 print("Training on Device: ", device)
 print("Device_id: ", device_id)
 print("GPU: ",torch.cuda.get_device_name(device_id))
@@ -52,7 +54,7 @@ else: color_channels = 3
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def train_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFlip,aug_Rotate,aug_RandomCrop,
-                  opt,loss_function,baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt,run,wandbopt = False):
+                  opt,loss_function,baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt,run,wandbopt = False, ftunelayers = None):
 
     removed_images_smo = ['0510','0598','1343','1415','1429','1454','1596','1635','1772','2243','2682','2693','2581','2989','3416','3430','3617',
                     '3811','3924','3950','3984','4127','4679','4767','5151','5492','5495','5857','6072','6331','7281','7912','8837','8845',
@@ -88,7 +90,7 @@ def train_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFl
 
     #redundant training combinations
     if (baseline and (ftuneenc or ftunedec or ftunebnorm or ftuneadapt)): return
-    if not(baseline or ftuneenc or ftunedec or ftunebnorm or ftuneadapt): return
+    #if not(baseline or ftuneenc or ftunedec or ftunebnorm or ftuneadapt): return
     if (ftuneenc and ftunedec and ftunebnorm): return
 
     #choosing removed images
@@ -258,7 +260,7 @@ def train_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFl
     # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     #training loop
-    model_train(unet_train, encoder_name, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt)
+    model_train(unet_train, encoder_name, baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers)
     non_frozen_parameters = [p for p in unet_train.parameters() if p.requires_grad]
     print("Trainable Parameters: ", len(non_frozen_parameters))
 
@@ -274,14 +276,16 @@ def train_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFl
 
     #training
     history = fit(unet_train, train_loader, val_loader, criterion[1], optimizer, sched, metric_names, 
-                  baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, encoder_name, 
+                  baseline, ftuneenc, ftunedec, ftunebnorm, ftuneadapt, ftunelayers, encoder_name, 
                   wandbopt, run, device)
 
     #saving model
+    '''
     run_name = run_builder(aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFlip,aug_Rotate,aug_RandomCrop,
                            encoder_name,opt,loss_function,
                            baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt)
-
+    '''
+                           
     if (not os.path.exists(modelsdir + run_name + "/")): os.makedirs(modelsdir + run_name + "/")
     if (not os.path.exists(figsdir + run_name + "/")): os.makedirs(figsdir + run_name + "/")
     torch.save((unet_train,history), modelsdir + run_name + "/" + run_name + "_Unet.pt")
@@ -296,7 +300,12 @@ def train_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFl
     header = "InitialLR Loss Optimizer"
     header = header.split()
     df = pd.DataFrame(data = [hypers], columns = header)
+    print(modelsdir + run_name + "/" + run_name +"_hypers.txt")
     df.to_csv(modelsdir + run_name + "/" + run_name +"_hypers.txt", index = False, sep = " ", mode = "w", header = True)
+    
+    np.savetxt(modelsdir + run_name + "/nparams.txt", [len(non_frozen_parameters)])
+
+
 
     gc.collect()
     # gc.set_debug(gc.DEBUG_LEAK)
@@ -335,12 +344,35 @@ if (wandbopt):
 
 else:
 
-    run_name = "test"
+    encoder_name = "resnet18"
 
-    # calling function
-    train_network("vgg19_bn",0,0,0,0,
-                0.5,"adam","BalancedCCE",
-                False,False,False,False,True,
-                run_name,wandbopt)
+    if (encoder_name == "resnet18"): nlayers = 27
+    if (encoder_name == "vgg19_bn"): nlayers = 28
+    
 
+    for i in range(14,nlayers+1):
+        ftunelayers = [False for _ in range(nlayers)]
+        ftunelayers[i] = True
+        run_name = "ablation_layer_%i" % i
+
+        print(run_name)
+        # calling function
+        train_network(encoder_name,0,0,0,0,
+                    0.5,"adam","BalancedCCE",
+                    False,False,False,False,False,
+                    run_name,wandbopt,ftunelayers)
+
+
+    # #right to left
+    # for i in range(nlayers):
+    #     ftunelayers = [False for _ in range(nlayers)]
+    #     ftunelayers[nlayers-1-i] = True
+    #     run_name = "right_to_left%i" % i
+    
+    #     print(run_name)
+    #     # calling function
+    #     train_network(encoder_name,0,0,0,0,
+    #                 0.5,"adam","BalancedCCE",
+    #                 False,False,False,False,False,
+    #                 run_name,wandbopt,ftunelayers)
 

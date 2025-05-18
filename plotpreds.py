@@ -103,38 +103,3 @@ cb = fig.colorbar(im, cax = cbar_ax, format=fmt, ticks=tickz, orientation='horiz
 plt.subplots_adjust(wspace=0, hspace=0.1)
 #plt.tight_layout()
 plt.savefig("adapt-domains-equal.pdf", bbox_inches="tight")
-
-sys.exit()
-
-# Sample data
-x = np.linspace(0, 10, 100)
-y1 = np.sin(x)
-y2 = np.cos(x)
-y3 = np.tan(x)
-
-# Create a 2x3 grid of subplots
-fig, axs = plt.subplots(len(modelsdirs), len(baselines), figsize=(12, 8))
-
-# Top row plots (Row 1)
-axs[0, 0].plot(x, y1)
-axs[0, 0].set_title("Sine Plot")
-axs[0, 1].plot(x, y2)
-axs[0, 1].set_title("Cosine Plot")
-axs[0, 2].plot(x, y3)
-axs[0, 2].set_title("Tangent Plot")
-
-# Row title for top row
-fig.suptitle('Title for Row 1', x=0.5, y=0.97, fontsize=14)
-
-# Bottom row plots (Row 2)
-axs[1, 0].plot(x, -y1)
-axs[1, 1].plot(x, -y2)
-axs[1, 2].plot(x, -y3)
-
-# Row title for bottom row
-fig.text(0.5, 0.52, 'Title for Row 2', ha='center', fontsize=14)
-
-# Remove space between subplots
-plt.subplots_adjust(wspace=0, hspace=0.3)
-
-plt.show()

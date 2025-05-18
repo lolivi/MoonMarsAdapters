@@ -6,7 +6,7 @@ from model_library import *
 
 compopt = False # whether to compute mean, std devs and distributions
 linopt = False # whether to linearize Unet with adapters
-datasettype = "synthetic-moon" #"synthetic-moon", "real-moon","ai4mars","marsdataset3","ai4mars-inference"
+datasettype = "real-moon" #"synthetic-moon", "real-moon","ai4mars","marsdataset3","ai4mars-inference"
 
 if (datasettype == "synthetic-moon"):
     IMAGE_PATH = "synthetic-moon-dataset/images/render/"
@@ -46,6 +46,7 @@ if (not os.path.exists(modelsdir)): os.makedirs(modelsdir)
 
 #check if cuda is available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
 device_id = torch.cuda.current_device()
 print("Test on Device: ", device)
 if (device != "cpu"):
@@ -60,7 +61,7 @@ else: color_channels = 3
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def test_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFlip,aug_Rotate,aug_RandomCrop,
-                  opt,loss_function,baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt,resfact,nadapters = 'all',method='wnorm_nparams'):
+                  opt,loss_function,baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt,resfact,run_name,nadapters = 'all',method='wnorm_nparams'):
 
     removed_images_smo = ['0510','0598','1343','1415','1429','1454','1596','1635','1772','2243','2682','2693','2581','2989','3416','3430','3617',
                     '3811','3924','3950','3984','4127','4679','4767','5151','5492','5495','5857','6072','6331','7281','7912','8837','8845',
@@ -242,22 +243,31 @@ def test_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFli
     set_seed(42,device)
 
     # loading model
+
     run_name = run_builder(aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFlip,aug_Rotate,aug_RandomCrop,
                            encoder_name,opt,loss_function,
                            baseline,ftuneenc,ftunedec,ftunebnorm,ftuneadapt)
+
     if (not os.path.exists(modelsdir + run_name + "/")): 
         print(modelsdir + run_name + "/" + " does not exist ...")
         return
     if (not os.path.exists(figsdir + run_name + "/")): os.makedirs(figsdir + run_name + "/")
+    
+    print(modelsdir + run_name + "/" + run_name + "_Unet.pt")
     unet_load, history_load = torch.load(modelsdir + run_name + "/" + run_name + "_Unet.pt",map_location=device)
-    if not(baseline or ftuneenc or ftunedec or ftunebnorm or ftuneadapt): 
-        unet_load, history_load = torch.load("synthetic-moon-models/" + run_name + "/" + run_name + "_Unet.pt",map_location=device)
+    # if not(baseline or ftuneenc or ftunedec or ftunebnorm or ftuneadapt): 
+    #     unet_load, history_load = torch.load("synthetic-moon-models/" + run_name + "/" + run_name + "_Unet.pt",map_location=device)
+
+
+    # non_frozen_parameters = [p for p in unet_load.parameters() if p.requires_grad]
+    # print("Trainable Parameters: ", len(non_frozen_parameters))
 
     if (linopt and ftuneadapt): 
         unet_load = compress_weights(unet_load, encoder_name)
         torch.save((unet_load,history_load), modelsdir + run_name + "/" + run_name + "_Unetlin.pt")
         unet_load.to(device = device)
         print("Compressed model produced")
+        print(modelsdir + run_name + "/" + run_name + "_Unetlin.pt")
 
     if (nadapters == 'tradeoff' and ftuneadapt):
         print('Finding best tradeoff to eliminate adapters...')
@@ -289,56 +299,89 @@ def test_network(encoder_name,aug_GaussianBlur,aug_ColorJitter,aug_HorizontalFli
     datadirs = ["Validation","Test","Training","Removed"]
     plotopt = [False,False,False,False]
 
-    dataloaders = [val_loader]
-    datanames = [X_val]
-    datatests = [val_set]
-    datadirs = ["Validation"]
-    plotopt = [True]
+    dataloaders = [test_loader]
+    datanames = [X_test]
+    datatests = [test_set]
+    datadirs = ["Test"]
+    plotopt = [False]
+    bal_accs = []
 
-    for idata,dataloader in enumerate(dataloaders):
-        
-        #plots in each model
-        figsrun = figsdir + run_name + "/"
-        if not(baseline or ftuneenc or ftunedec or ftunebnorm or ftuneadapt): figsrun = figsdir + run_name + "_baseline/"
-        if not os.path.exists(figsrun): os.mkdir(figsrun)
-        dataset = datatests[idata]
-        if (not dataset): continue
-        scores, conf_matrix = evaluate(unet_load,dataloader,metric_names,device)
 
-        plot_conf_matrix(conf_matrix,figsrun)
-        acc = scores[0]
-        bal_acc = scores[1]
-        jacc_score = scores[2]
 
-        print("Accuracy: {:.10f}".format(np.mean(acc)))
-        print("Balanced Accuracy: {:.10f}".format(np.mean(bal_acc)))
-        print("Jaccard Score: {:.10f}".format(np.mean(jacc_score)))
+    noise_opt = 'False'       # gauss, bad_pxl, blur, bright, False
+    noise_val_arr = [0]       
 
-        mean_scores = [[np.mean(acc),np.mean(bal_acc),np.mean(jacc_score)]]
-        column_names = copy.deepcopy(metric_names)
-        resultsrun = figsrun + datadirs[idata] + "/"
-        if not os.path.exists(resultsrun): os.mkdir(resultsrun)
-        outfile = resultsrun + "metrics%i.txt" % resfact
-        if (linopt): outfile = resultsrun + "metricslin%i.txt" % resfact
-        if (nadapters != 'all' and ftuneadapt): 
-            outfile = resultsrun + ("metricsadapt%i" % nadapters) + "_" + method + ".txt"
-            mean_scores[0].extend([wnorm,nparams,size])
-            column_names.extend(["Weight_Norm","N_Parameters","Adapter_Size"])
-        column_names = [c.replace(' ','_') for c in column_names]
-        df_results = pd.DataFrame(data = mean_scores, columns = column_names)
-        df_results.to_csv(outfile, index = False, sep = " ")
+     # gauss= [0,Inf], bad_pxl=[0,1]], blur=[0,odd numbers,Inf], bright=[0,Inf], 
+    if noise_opt != False:
+        if noise_opt == 'gauss':
+            noise_val_arr = np.arange(0,2,0.01)
+        if noise_opt == 'bad_pxl':
+            noise_val_arr = np.arange(0,1,0.01)
+        if noise_opt == 'blur':
+            noise_val_arr = np.arange(1,21,2) 
+        if noise_opt == 'bright':
+            noise_val_arr = np.arange(0,3.01,0.01) 
 
-        if not plotopt[idata]: continue
 
-        for iplot in range(len(dataloader)):
+
+    for i,noise_val in enumerate(noise_val_arr):
+
+        for idata,dataloader in enumerate(dataloaders):
             
-            dataset_im = dataset[iplot]
-            image,mask = dataset_im[0],dataset_im[1]
-            prediction = predicted_mask(unet_load,image.view(1,1,npix_x_val,npix_y_val),device)
-            if (not os.path.exists(figsrun + datadirs[idata] + "/")): os.makedirs(figsrun + datadirs[idata] + "/")
-            plot_prediction(image,mask,prediction,datanames[idata][iplot],bal_acc[iplot],iplot,npix_x_val,npix_y_val,figsrun + datadirs[idata] + "/")
+            #plots in each model
+            figsrun = figsdir + run_name + "/"
+            # if not(baseline or ftuneenc or ftunedec or ftunebnorm or ftuneadapt): figsrun = figsdir + run_name + "_baseline/"
+            if not os.path.exists(figsrun): os.mkdir(figsrun)
+            dataset = datatests[idata]
+            if (not dataset): continue
+            scores, conf_matrix = evaluate(unet_load,dataloader,metric_names,device,noise_opt,noise_val)
 
-        computememory()
+            plot_conf_matrix(conf_matrix,figsrun)
+            acc = scores[0]
+            bal_acc = scores[1]
+            jacc_score = scores[2]
+            mean_scores = [[np.mean(acc),np.mean(bal_acc),np.mean(jacc_score)]]
+
+            print("Accuracy: {:.10f}".format(np.mean(acc)))
+            print("Balanced Accuracy: {:.10f}".format(np.mean(bal_acc)))
+            print("Jaccard Score: {:.10f}".format(np.mean(jacc_score)))
+
+            resultsrun = figsrun + datadirs[idata] + "/"
+
+            column_names = copy.deepcopy(metric_names)
+            if not os.path.exists(resultsrun): os.mkdir(resultsrun)
+            outfile = resultsrun + "metrics%i.txt" % resfact
+            if (linopt): outfile = resultsrun + "metricslin%i.txt" % resfact
+            if (nadapters != 'all' and ftuneadapt): 
+                outfile = resultsrun + ("metricsadapt%i" % nadapters) + "_" + method + ".txt"
+                mean_scores[0].extend([wnorm,nparams,size])
+                column_names.extend(["Weight_Norm","N_Parameters","Adapter_Size"])
+            column_names = [c.replace(' ','_') for c in column_names]
+            df_results = pd.DataFrame(data = mean_scores, columns = column_names)
+            df_results.to_csv(outfile, index = False, sep = " ")
+            if not plotopt[idata]: continue
+
+            for iplot in range(len(dataloader)):
+                
+                dataset_im = dataset[iplot]
+                image,mask = dataset_im[0],dataset_im[1]
+                prediction = predicted_mask(unet_load,image.view(1,1,npix_x_val,npix_y_val),device)
+                if (not os.path.exists(figsrun + datadirs[idata] + "/")): os.makedirs(figsrun + datadirs[idata] + "/")
+                plot_prediction(image,mask,prediction,datanames[idata][iplot],bal_acc[iplot],iplot,npix_x_val,npix_y_val,figsrun + datadirs[idata] + "/")
+                
+            computememory()
+
+
+        if noise_opt != False:
+            #save to txt
+            print(resultsrun+"mean_scores_"+noise_opt+"_"+str(noise_val)+".txt")
+            np.savetxt(resultsrun+"mean_scores_"+noise_opt+"_"+str(noise_val)+".txt", mean_scores)
+            np.savetxt(resultsrun+"conf_matrix_"+noise_opt+"_"+str(noise_val)+".txt", conf_matrix)
+
+
+
+    
+
 
 
 #--------------------------------------------
@@ -381,7 +424,65 @@ for encoder in encoders:
 # for nadapter in range(29):
 #     test_network("vgg19_bn",0,0,0,0,0.5,"adam","BalancedCCE",False,False,False,False,True,1,nadapter,'wnorm_nparams')
 
+'''
 encoders = ["resnet18","vgg19_bn"]  
 for encoder in encoders:
-    #test_network(encoder,0,0,0,0,0.5,"adam","BalancedCCE",False,False,False,False,True,1)
-    test_network(encoder,0,0,0,0,0.5,"adam","BalancedCCE",True,False,False,False,False,1)
+    test_network(encoder,0,0,0,0,0.5,"adam","BalancedCCE",False,False,False,False,True,1)
+'''
+
+
+# nlayers=28
+# ftunelayers = [False for _ in range(nlayers)]
+
+# #left to right
+# for i in range(nlayers):
+#     ftunelayers[i] = True
+#     run_name = "left_to_right_%i" % i
+
+#     print(run_name)
+#     # calling function
+#     test_network("vgg19_bn",0,0,0,0,
+#                 0.5,"adam","BalancedCCE",
+#                 False,False,False,False,False,1,run_name)
+
+# nlayers = 28
+# ftunelayers = [False for _ in range(nlayers)]
+
+# #right to left
+# for i in range(nlayers):
+#     ftunelayers[nlayers-1-i] = True
+#     run_name = "ablation_layer_%i" % i
+#     print(run_name)
+
+#     # calling function
+#     test_network("vgg19_bn",0,0,0,0,
+#                 0.5,"adam","BalancedCCE",
+#                 False,False,False,False,False,1,run_name)
+    
+#     #resetting
+#     ftunelayers[nlayers-1-i] = False
+
+
+# encoder_name = "resnet18"
+
+# if (encoder_name == "resnet18"): nlayers = 27
+# if (encoder_name == "vgg19_bn"): nlayers = 28
+
+
+# for i in range(0,nlayers+1):
+#     ftunelayers = [False for _ in range(nlayers)]
+#     ftunelayers[i] = True
+#     run_name = "ablation_layer_%i" % i
+
+#     if os.path.exists("marsdataset3-models/"+run_name):
+#         print(run_name)
+#         # calling function
+#         test_network(encoder_name,0,0,0,0,
+#                     0.5,"adam","BalancedCCE",
+#                     False,False,False,False,False,
+#                     1,run_name)
+
+
+test_network("vgg19_bn",0,0,0,0,0.5,"adam","BalancedCCE",False,False,False,False,True,1,'pippo')
+
+
