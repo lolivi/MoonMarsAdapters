@@ -6,14 +6,15 @@ In recent years, the application of Deep Learning techniques has shown remarkabl
 Please cite our paper if you use it in your research：
 
 ```
-@misc{olivi2025efficientadaptationdeepneural,
-      title={Efficient Adaptation of Deep Neural Networks for Semantic Segmentation in Space Applications}, 
-      author={Leonardo Olivi and Edoardo Santero Mormile and Enzo Tartaglione},
-      year={2025},
-      eprint={2504.15991},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2504.15991}, 
+@article{olivi2025efficient,
+  title={Efficient adaptation of deep neural networks for semantic segmentation in space applications},
+  author={Olivi, Leonardo and Santero Mormile, Edoardo and Tartaglione, Enzo},
+  journal={Scientific Reports},
+  volume={15},
+  number={1},
+  pages={1--14},
+  year={2025},
+  publisher={Nature Publishing Group}
 }
 ```
 
